@@ -46,7 +46,7 @@
   </style>
 </head>
 <body>
-  <h1>Press SwitchBot V1</h1>
+  <h1>Press SwitchBot V2</h1>
   <button id="pressButton">Press</button>
   <pre id="output">waiting…</pre>
 
@@ -65,7 +65,8 @@
       output.textContent = "Sending command...";
 
       try {
-        const response = await fetch(proxyUrl + encodeURIComponent(switchbotUrl), {
+        // Use "url=" before the encoded SwitchBot URL
+        const response = await fetch(proxyUrl + "url=" + encodeURIComponent(switchbotUrl), {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${token}`,
