@@ -1,105 +1,100 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SwitchBot Device Control (demo)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SwitchBot Button</title>
   <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f7f9fc; }
-    .card { padding:20px;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,0.12);max-width:520px;text-align:center;background:#fff; }
-    select, button { margin-top:12px;padding:8px 12px;font-size:16px;border-radius:8px;border:1px solid #ccc; }
-    button { cursor:pointer;background:#0078ff;color:#fff;border:none; }
-    button:hover { background:#005fcc; }
-    .status { margin-top:12px; font-weight:600; }
-    pre { text-align:left; background:#f6f8fa;padding:10px;border-radius:8px;overflow:auto;max-height:200px; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 20px;
+      border-radius: 8px;
+      border: none;
+      background: #4caf50;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    button.success {
+      background: #2ecc71;
+    }
+    button.error {
+      background: #e74c3c;
+    }
+    pre {
+      margin-top: 20px;
+      background: #222;
+      padding: 1em;
+      border-radius: 8px;
+      max-width: 600px;
+      overflow-x: auto;
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>SwitchBot Demo</h1>
-    <p id="message">Fetching devices…</p>
-    <select id="deviceSelect" style="display:none"></select><br/>
-    <button id="pressBtn" style="display:none">Press Selected Device</button>
-    <div class="status" id="status"></div>
-    <details style="margin-top:12px"><summary>Console response</summary><pre id="output">waiting…</pre></details>
-  </div>
+  <h1>Press SwitchBot</h1>
+  <button id="pressBtn" onclick="pressBot()">Press</button>
+  <pre id="output">waiting…</pre>
 
   <script>
-  (async function(){
-    // ======= USER TOKENS (replace if needed)
-    const TOKEN = "c74618b2e6c180d503bb8c6a87a22072a0ddbff2172ec2195ee7ff5419ed7ab2dcabeb032c7ce4c6a4cdf8050f3dae31";
-    const SECRET = "93dd5e6d2049e8e157ac02f066aee298";
+    const workerUrl = "https://quiet-recipe-28ef.hpprpqksfd.workers.dev"; 
+    const botId = "E16A83C6691D"; // your Bot
 
-    const messageEl = document.getElementById('message');
-    const statusEl = document.getElementById('status');
-    const selectEl = document.getElementById('deviceSelect');
-    const pressBtn = document.getElementById('pressBtn');
-    const outputEl = document.getElementById('output');
+    async function pressBot() {
+      const btn = document.getElementById("pressBtn");
+      const output = document.getElementById("output");
 
-    function log(obj){
-      console.log(obj);
-      outputEl.textContent = JSON.stringify(obj, null, 2);
-    }
+      btn.disabled = true;
+      btn.textContent = "Sending...";
+      btn.classList.remove("success", "error");
+      output.textContent = "Sending command...";
 
-    async function signHeaders(){
-      const timestamp = Date.now().toString();
-      const nonce = (crypto.randomUUID && crypto.randomUUID()) || Math.random().toString(36).slice(2);
-      const enc = new TextEncoder();
-      const key = await crypto.subtle.importKey(
-        "raw",
-        enc.encode(SECRET),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-      );
-      const sigBuffer = await crypto.subtle.sign("HMAC", key, enc.encode(TOKEN + timestamp + nonce));
-      const sigBytes = new Uint8Array(sigBuffer);
-      let binary = '';
-      for (let i = 0; i < sigBytes.byteLength; i++) binary += String.fromCharCode(sigBytes[i]);
-      const sign = btoa(binary);
-      return { Authorization: TOKEN, sign, t: timestamp, nonce };
-    }
-
-    async function fetchDevices(){
-      const headers = await signHeaders();
-      const resp = await fetch("https://api.switch-bot.com/v1.1/devices", { headers });
-      const data = await resp.json();
-      log({endpoint:"/devices", response:data});
-      if (data.body && data.body.deviceList && data.body.deviceList.length > 0){
-        selectEl.innerHTML = "";
-        data.body.deviceList.forEach(dev=>{
-          const opt = document.createElement("option");
-          opt.value = dev.deviceId;
-          opt.textContent = `${dev.deviceName} (${dev.deviceType})`;
-          selectEl.appendChild(opt);
+      try {
+        const response = await fetch(workerUrl + "/devices/" + botId + "/commands", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            command: "press",
+            parameter: "default",
+            commandType: "command"
+          }),
         });
-        selectEl.style.display = "";
-        pressBtn.style.display = "";
-        messageEl.textContent = "Select a device and press it:";
-      } else {
-        messageEl.textContent = "No devices found.";
+
+        const data = await response.json();
+        if (data.message === "success") {
+          btn.textContent = "Pressed!";
+          btn.classList.add("success");
+        } else {
+          btn.textContent = "Error!";
+          btn.classList.add("error");
+        }
+
+        output.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        btn.textContent = "Failed!";
+        btn.classList.add("error");
+        output.textContent = "Error: " + err.message;
       }
-    }
 
-    async function pressDevice(){
-      const deviceId = selectEl.value;
-      const headers = await signHeaders();
-      headers["Content-Type"] = "application/json; charset=utf-8";
-      const body = {
-        command: "press",
-        parameter: "default",
-        commandType: "command"
-      };
-      const url = `https://api.switch-bot.com/v1.1/devices/${deviceId}/commands`;
-      const resp = await fetch(url, { method:"POST", headers, body: JSON.stringify(body) });
-      const json = await resp.json().catch(()=>({status:resp.status}));
-      log({endpoint:"/commands", request:{deviceId,body}, response:json});
-      statusEl.textContent = resp.ok ? "Press command sent ✅" : "Command failed ❌";
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = "Press";
+        btn.classList.remove("success", "error");
+      }, 2000);
     }
-
-    pressBtn.onclick = pressDevice;
-    fetchDevices();
-  })();
   </script>
 </body>
 </html>
