@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SwitchBot Button</title>
+  <title>SwitchBot Button via CORS Proxy</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -51,8 +51,9 @@
   <pre id="output">waiting…</pre>
 
   <script>
-    const workerUrl = "https://quiet-recipe-28ef.hpprpqksfd.workers.dev";
-    const deviceId = "E16A83C6691D";
+    const proxyUrl = "https://corsproxy.io/?";
+    const switchbotUrl = "https://api.switch-bot.com/v1.0/devices/E16A83C6691D/commands";
+    const token = "YOUR_SWITCHBOT_TOKEN"; // ⚠️ exposed to browser
 
     const btn = document.getElementById("pressButton");
     const output = document.getElementById("output");
@@ -64,9 +65,12 @@
       output.textContent = "Sending command...";
 
       try {
-        const response = await fetch(`${workerUrl}/devices/${deviceId}/commands`, {
+        const response = await fetch(proxyUrl + encodeURIComponent(switchbotUrl), {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({
             command: "press",
             parameter: "default",
@@ -74,17 +78,10 @@
           })
         });
 
-        let data;
-        try {
-          data = await response.json();
-        } catch (jsonErr) {
-          throw new Error(`Invalid JSON response: ${jsonErr.message}`);
-        }
-
-        // Show the full SwitchBot API response
+        const data = await response.json();
         output.textContent = JSON.stringify(data, null, 2);
 
-        if (data.message === "success" && data.body?.deviceList?.some(d => d.deviceId === deviceId)) {
+        if (data.message === "success") {
           btn.textContent = "Pressed!";
           btn.classList.add("success");
         } else {
@@ -93,9 +90,7 @@
         }
 
       } catch (err) {
-        // Show detailed error including worker fetch and SwitchBot API
-        output.textContent = `Error:\n${err.message}\n\n` +
-                             `Note: If you see "Failed to fetch", check your worker URL, CORS, or network connectivity.`;
+        output.textContent = `Error:\n${err.message}`;
         btn.textContent = "Error!";
         btn.classList.add("error");
       } finally {
