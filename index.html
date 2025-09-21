@@ -52,12 +52,12 @@
 
   <script>
     const workerUrl = "https://quiet-recipe-28ef.hpprpqksfd.workers.dev";
-    const deviceId = "E16A83C6691D"; // your Door/Device
+    const deviceId = "E16A83C6691D";
 
-    document.getElementById("pressButton").addEventListener("click", async () => {
-      const btn = document.getElementById("pressButton");
-      const output = document.getElementById("output");
+    const btn = document.getElementById("pressButton");
+    const output = document.getElementById("output");
 
+    btn.addEventListener("click", async () => {
       btn.disabled = true;
       btn.textContent = "Sending...";
       btn.classList.remove("success", "error");
@@ -75,16 +75,16 @@
         });
 
         let data;
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`HTTP ${response.status}: ${text}`);
-        } else {
+        try {
           data = await response.json();
+        } catch (jsonErr) {
+          throw new Error(`Invalid JSON response: ${jsonErr.message}`);
         }
 
+        // Show the full SwitchBot API response
         output.textContent = JSON.stringify(data, null, 2);
 
-        if (data.message === "success") {
+        if (data.message === "success" && data.body?.deviceList?.some(d => d.deviceId === deviceId)) {
           btn.textContent = "Pressed!";
           btn.classList.add("success");
         } else {
@@ -93,7 +93,9 @@
         }
 
       } catch (err) {
-        output.textContent = `Error:\n${err.message}`;
+        // Show detailed error including worker fetch and SwitchBot API
+        output.textContent = `Error:\n${err.message}\n\n` +
+                             `Note: If you see "Failed to fetch", check your worker URL, CORS, or network connectivity.`;
         btn.textContent = "Error!";
         btn.classList.add("error");
       } finally {
