@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SwitchBot Button</title>
   <style>
     body {
@@ -14,6 +14,7 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
+      margin: 0;
     }
     button {
       padding: 15px 30px;
@@ -46,15 +47,15 @@
 </head>
 <body>
   <h1>Press SwitchBot</h1>
-  <button id="pressBtn" onclick="pressBot()">Press</button>
+  <button id="pressButton">Press</button>
   <pre id="output">waiting…</pre>
 
   <script>
-    const workerUrl = "https://quiet-recipe-28ef.hpprpqksfd.workers.dev"; 
-    const botId = "E16A83C6691D"; // your Bot
+    const workerUrl = "https://quiet-recipe-28ef.hpprpqksfd.workers.dev";
+    const deviceId = "E16A83C6691D"; // your Door/Device
 
-    async function pressBot() {
-      const btn = document.getElementById("pressBtn");
+    document.getElementById("pressButton").addEventListener("click", async () => {
+      const btn = document.getElementById("pressButton");
       const output = document.getElementById("output");
 
       btn.disabled = true;
@@ -63,17 +64,26 @@
       output.textContent = "Sending command...";
 
       try {
-        const response = await fetch(workerUrl + "/devices/" + botId + "/commands", {
+        const response = await fetch(`${workerUrl}/devices/${deviceId}/commands`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             command: "press",
             parameter: "default",
             commandType: "command"
-          }),
+          })
         });
 
-        const data = await response.json();
+        let data;
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`HTTP ${response.status}: ${text}`);
+        } else {
+          data = await response.json();
+        }
+
+        output.textContent = JSON.stringify(data, null, 2);
+
         if (data.message === "success") {
           btn.textContent = "Pressed!";
           btn.classList.add("success");
@@ -82,19 +92,18 @@
           btn.classList.add("error");
         }
 
-        output.textContent = JSON.stringify(data, null, 2);
       } catch (err) {
-        btn.textContent = "Failed!";
+        output.textContent = `Error:\n${err.message}`;
+        btn.textContent = "Error!";
         btn.classList.add("error");
-        output.textContent = "Error: " + err.message;
+      } finally {
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = "Press";
+          btn.classList.remove("success", "error");
+        }, 3000);
       }
-
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.textContent = "Press";
-        btn.classList.remove("success", "error");
-      }, 2000);
-    }
+    });
   </script>
 </body>
 </html>
