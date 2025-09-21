@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SwitchBot Button via CORS Proxy</title>
+  <title>SwitchBot Button</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -46,15 +46,11 @@
   </style>
 </head>
 <body>
-  <h1>Press SwitchBot V2</h1>
+  <h1>Press SwitchBot V4</h1>
   <button id="pressButton">Press</button>
   <pre id="output">waiting…</pre>
 
   <script>
-    const proxyUrl = "https://corsproxy.io/?";
-    const switchbotUrl = "https://api.switch-bot.com/v1.0/devices/E16A83C6691D/commands";
-    const token = "YOUR_SWITCHBOT_TOKEN"; // ⚠️ exposed to browser
-
     const btn = document.getElementById("pressButton");
     const output = document.getElementById("output");
 
@@ -62,45 +58,51 @@
       btn.disabled = true;
       btn.textContent = "Sending...";
       btn.classList.remove("success", "error");
-      output.textContent = "Sending command...";
+      output.textContent = "Sending command…";
 
-      try {
-        // Use "url=" before the encoded SwitchBot URL
-        const response = await fetch(proxyUrl + "url=" + encodeURIComponent(switchbotUrl), {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            command: "press",
-            parameter: "default",
-            commandType: "command"
-          })
-        });
+      (async () => {
+        const myToken = "c74618b2e6c180d503bb8c6a87a22072a0ddbff2172ec2195ee7ff5419ed7ab2dcabeb032c7ce4c6a4cdf8050f3dae31";
+        const deviceId = "E16A83C6691D";
+        const proxyUrl = "https://corsproxy.io/?";
+        const switchbotUrl = `https://api.switch-bot.com/v1.0/devices/${deviceId}/commands`;
 
-        const data = await response.json();
-        output.textContent = JSON.stringify(data, null, 2);
+        try {
+          const response = await fetch(proxyUrl + encodeURIComponent(switchbotUrl), {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${myToken}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              command: "press",
+              parameter: "default",
+              commandType: "command"
+            })
+          });
 
-        if (data.message === "success") {
-          btn.textContent = "Pressed!";
-          btn.classList.add("success");
-        } else {
+          const data = await response.json();
+          output.textContent = JSON.stringify(data, null, 2);
+
+          if (data.message === "success") {
+            btn.textContent = "Pressed!";
+            btn.classList.add("success");
+          } else {
+            btn.textContent = "Error!";
+            btn.classList.add("error");
+          }
+
+        } catch (err) {
+          output.textContent = `Error:\n${err.message}`;
           btn.textContent = "Error!";
           btn.classList.add("error");
+        } finally {
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.textContent = "Press";
+            btn.classList.remove("success", "error");
+          }, 3000);
         }
-
-      } catch (err) {
-        output.textContent = `Error:\n${err.message}`;
-        btn.textContent = "Error!";
-        btn.classList.add("error");
-      } finally {
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.textContent = "Press";
-          btn.classList.remove("success", "error");
-        }, 3000);
-      }
+      })();
     });
   </script>
 </body>
