@@ -63,7 +63,7 @@
 
     btn.addEventListener("click", async () => {
       btn.disabled = true;
-      btn.textContent = "Sending...";
+      btn.textContent = "Unlocking...";
       btn.classList.remove("success", "error");
       output.textContent = "Sending command…";
 
@@ -91,7 +91,7 @@
           output.textContent = JSON.stringify(data, null, 2);
 
           if (data.message === "success") {
-            btn.textContent = "Pressed!";
+            btn.textContent = "Unlocked!";
             btn.classList.add("success");
           } else {
             btn.textContent = "Error!";
@@ -105,7 +105,7 @@
         } finally {
           setTimeout(() => {
             btn.disabled = false;
-            btn.textContent = "Press";
+            btn.textContent = "Unlock";
             btn.classList.remove("success", "error");
           }, 3000);
         }
