@@ -91,6 +91,9 @@
             })
           });
 
+          // Wait 1 second to account for latency
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           const data = await response.json();
           output.textContent = JSON.stringify(data, null, 2);
 
@@ -103,6 +106,8 @@
           }
 
         } catch (err) {
+          // Wait 1 second to account for latency
+          await new Promise(resolve => setTimeout(resolve, 1000));
           output.textContent = `Error:\n${err.message}`;
           btn.textContent = "Error!";
           btn.classList.add("error");
