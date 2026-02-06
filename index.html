@@ -1,42 +1,65 @@
-<script>
-  const btn = document.getElementById("pressButton");
-  const output = document.getElementById("output");
-
-  btn.addEventListener("click", async () => {
-    btn.disabled = true;
-    btn.textContent = "Unlocking...";
-    btn.classList.remove("success", "error");
-    output.textContent = "Sending command…";
-
-    try {
-      const response = await fetch(
-        "https://white-salad-42a2.hpprpqksfd.workers.dev/",
-        {
-          method: "POST"
-        }
-      );
-
-      const data = await response.json();
-      output.textContent = JSON.stringify(data, null, 2);
-
-      if (data.message === "success") {
-        btn.textContent = "Unlocked!";
-        btn.classList.add("success");
-      } else {
-        btn.textContent = "Error!";
-        btn.classList.add("error");
-      }
-
-    } catch (err) {
-      output.textContent = `Error:\n${err.message}`;
-      btn.textContent = "Error!";
-      btn.classList.add("error");
-    } finally {
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.textContent = "Unlock";
-        btn.classList.remove("success", "error");
-      }, 3000);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Key</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
-  });
-</script>
+    button {
+      padding: 15px 30px;
+      font-size: 20px;
+      border-radius: 8px;
+      border: none;
+      background: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    pre {
+      margin-top: 20px;
+      background: #222;
+      padding: 1em;
+      border-radius: 8px;
+      width: 300px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Unlock Test</h1>
+  <button id="pressButton">Unlock</button>
+  <pre id="output">ready</pre>
+
+  <script>
+    const btn = document.getElementById("pressButton");
+    const output = document.getElementById("output");
+
+    btn.addEventListener("click", async () => {
+      output.textContent = "clicked";
+
+      try {
+        const res = await fetch(
+          "https://white-salad-42a2.hpprpqksfd.workers.dev/",
+          { method: "POST" }
+        );
+        const data = await res.json();
+        output.textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        output.textContent = e.toString();
+      }
+    });
+  </script>
+
+</body>
+</html>
