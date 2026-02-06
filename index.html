@@ -59,7 +59,7 @@
   </h1>
   
   <button id="pressButton">Unlock</button>
-  <pre id="output">v1 ready</pre>
+  <pre id="output">v2.0 ready</pre>
 
   <script>
     const btn = document.getElementById("pressButton");
@@ -74,6 +74,8 @@
 
       try {
         const response = await fetch(workerUrl, { method: "POST" });
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
         const data = await response.json();
 
         output.textContent = JSON.stringify(data, null, 2);
