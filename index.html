@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Key</title>
   <style>
     body {
@@ -16,6 +16,12 @@
       height: 100vh;
       margin: 0;
     }
+    img {
+      max-width: 200px; /* adjust size as needed */
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #000;
+    }
     button {
       padding: 15px 30px;
       font-size: 20px;
@@ -24,20 +30,34 @@
       background: #4caf50;
       color: white;
       cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    button.success {
+      background: #2ecc71;
+    }
+    button.error {
+      background: #e74c3c;
     }
     pre {
       margin-top: 20px;
       background: #222;
       padding: 1em;
       border-radius: 8px;
-      width: 300px;
-      text-align: left;
+      max-width: 600px;
+      overflow-x: auto;
     }
   </style>
 </head>
 <body>
-
-  <h1>Unlock Test</h1>
+  <img src="sign.jpg" alt="Sign">
+  <h1 style="text-align: center; line-height: 1.2;">
+    press doorbell,<br>
+    then unlock
+  </h1>
+  
   <button id="pressButton">Unlock</button>
   <pre id="output">ready</pre>
 
@@ -46,20 +66,60 @@
     const output = document.getElementById("output");
 
     btn.addEventListener("click", async () => {
-      output.textContent = "clicked";
+      btn.disabled = true;
+      btn.textContent = "Unlocking...";
+      btn.classList.remove("success", "error");
+      output.textContent = "Sending command…";
 
-      try {
-        const res = await fetch(
-          "https://white-salad-42a2.hpprpqksfd.workers.dev/",
-          { method: "POST" }
-        );
-        const data = await res.json();
-        output.textContent = JSON.stringify(data, null, 2);
-      } catch (e) {
-        output.textContent = e.toString();
-      }
+      (async () => {
+        const myToken = "c74618b2e6c180d503bb8c6a87a22072a0ddbff2172ec2195ee7ff5419ed7ab2dcabeb032c7ce4c6a4cdf8050f3dae31";
+        const deviceId = "E16A83C6691D";
+        const proxyUrl = "https://thingproxy.freeboard.io/fetch/";
+        const switchbotUrl = `https://api.switch-bot.com/v1.0/devices/${deviceId}/commands`;
+
+        try {
+          const response = await fetch(proxyUrl + encodeURIComponent(switchbotUrl), {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${myToken}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              command: "press",
+              parameter: "default",
+              commandType: "command"
+            })
+          });
+
+          // Wait 1 second to account for latency
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const data = await response.json();
+          output.textContent = JSON.stringify(data, null, 2);
+
+          if (data.message === "success") {
+            btn.textContent = "Unlocked!";
+            btn.classList.add("success");
+          } else {
+            btn.textContent = "Error!";
+            btn.classList.add("error");
+          }
+
+        } catch (err) {
+          // Wait 1 second to account for latency
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          output.textContent = `Error:\n${err.message}`;
+          btn.textContent = "Error!";
+          btn.classList.add("error");
+        } finally {
+          setTimeout(() => {
+            btn.disabled = false;
+            btn.textContent = "Unlock";
+            btn.classList.remove("success", "error");
+          }, 3000);
+        }
+      })();
     });
   </script>
-
 </body>
 </html>
